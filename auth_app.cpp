@@ -17,6 +17,7 @@
 #pragma comment(lib, "user32.lib")
 #pragma comment(lib, "gdi32.lib")
 
+HWND g_hwnd = NULL;
 HHOOK g_hKeyboardHook = NULL;
 HHOOK g_hMouseHook = NULL;
 HWND g_hMainWindow = NULL;
@@ -194,12 +195,12 @@ bool SaveAllBackupKeys(const std::vector<std::pair<std::string, bool>>& keys)
     return false;
 }
 
-// Save backup keys dari vector BackupKeyEntry (untuk update status)
+// Save backup keys dari vector BackupKeyEntry (untuk update status) (Add On)
 bool SaveBackupKeyEntries()
 {
     try
     {
-        std::ofstream file(BACKUP_KEY_FILE);  // Tidak pakai binary mode
+        std::ofstream file(BACKUP_KEY_FILE);  
         if (file.is_open())
         {
             file << "SETUP_COMPLETE=1\n";
@@ -219,7 +220,7 @@ bool SaveBackupKeyEntries()
     return false;
 }
 
-// Helper function untuk trim whitespace dan carriage return
+// Helper function untuk trim whitespace dan carriage return (Add On)
 std::string TrimString(const std::string& str)
 {
     size_t start = str.find_first_not_of(" \t\r\n");
@@ -228,7 +229,7 @@ std::string TrimString(const std::string& str)
     return str.substr(start, end - start + 1);
 }
 
-// Load semua backup keys dari file
+// Load semua backup keys dari file (Add On)
 bool LoadAllBackupKeys()
 {
     g_backupKeys.clear();
@@ -241,7 +242,7 @@ bool LoadAllBackupKeys()
         }
         
         std::string line;
-        bool setupComplete = false;
+        bool setupComplete = false; 
         
         while (std::getline(file, line))
         {
@@ -284,7 +285,7 @@ bool LoadAllBackupKeys()
     return false;
 }
 
-// Helper untuk compare hash (case-insensitive dan trim)
+// Helper untuk compare hash (case-insensitive dan trim) (Add On)
 bool CompareHash(const std::string& hash1, const std::string& hash2)
 {
     std::string h1 = TrimString(hash1);
@@ -297,51 +298,25 @@ bool CompareHash(const std::string& hash1, const std::string& hash2)
     return h1 == h2;
 }
 
-// Verify backup key dan return index jika valid (-1 jika invalid)
+// Verify backup key dan return index jika valid (-1 jika invalid) (Add on)
 int VerifyBackupKey(const std::string &inputKey)
 {
-    // Trim input terlebih dahulu
-    std::string trimmedInput = TrimString(inputKey);
+    // Hash input langsung tanpa modifikasi apapun
+    std::string inputHash = SimpleHash(inputKey);
     
-    // Convert ke uppercase
-    std::string upperInput = trimmedInput;
-    std::transform(upperInput.begin(), upperInput.end(), upperInput.begin(), ::toupper);
-    
-    // Remove semua spasi
-    upperInput.erase(std::remove(upperInput.begin(), upperInput.end(), ' '), upperInput.end());
-    
-    // Versi tanpa dash
-    std::string noDashInput = upperInput;
-    noDashInput.erase(std::remove(noDashInput.begin(), noDashInput.end(), '-'), noDashInput.end());
-    
-    // Rebuild dengan format dash yang benar: XXXX-XXXX-XXXX-XXXX
-    std::string formattedInput;
-    for (size_t i = 0; i < noDashInput.length(); i++)
-    {
-        if (i > 0 && i % 4 == 0) formattedInput += "-";
-        formattedInput += noDashInput[i];
-    }
-    
-    // Compute semua kemungkinan hash
-    std::string hashOriginal = SimpleHash(upperInput);
-    std::string hashNoDash = SimpleHash(noDashInput);
-    std::string hashFormatted = SimpleHash(formattedInput);
-    
+    // Loop semua backup keys dan bandingkan hash
     for (size_t i = 0; i < g_backupKeys.size(); i++)
     {
-        // Use robust comparison
-        if (CompareHash(g_backupKeys[i].hashedKey, hashOriginal) || 
-            CompareHash(g_backupKeys[i].hashedKey, hashNoDash) ||
-            CompareHash(g_backupKeys[i].hashedKey, hashFormatted))
+        if (CompareHash(g_backupKeys[i].hashedKey, inputHash))
         {
-            return (int)i;
+            return (int)i;  // Kembalikan index jika cocok
         }
     }
     
-    return -1;
+    return -1;  // Tidak ditemukan
 }
 
-// Check apakah key sudah digunakan
+// Check apakah key sudah digunakan (Add on)
 bool IsKeyUsed(int keyIndex)
 {
     if (keyIndex >= 0 && keyIndex < (int)g_backupKeys.size())
@@ -351,7 +326,7 @@ bool IsKeyUsed(int keyIndex)
     return true; // Default anggap sudah digunakan jika index invalid
 }
 
-// Mark key sebagai sudah digunakan
+// Mark key sebagai sudah digunakan (Add on)
 bool MarkKeyAsUsed(int keyIndex)
 {
     if (keyIndex >= 0 && keyIndex < (int)g_backupKeys.size())
@@ -500,6 +475,7 @@ std::vector<std::string> LoadFilesFromJson()
     return files;
 }
 
+//Adds - On
 std::vector<std::string> GetIncorrectFiles()
 {
     static std::vector<std::string> first = {
@@ -814,6 +790,57 @@ bool VerifySelection()
             g_hMouseHook = SetWindowsHookEx(WH_MOUSE_LL, MouseHookProc,
                                            GetModuleHandle(NULL), 0);
         }
+
+        HFONT hFont = CreateFont(16, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE,
+            DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
+            DEFAULT_QUALITY, DEFAULT_PITCH | FF_DONTCARE, "Segoe UI");
+
+        int screenWidth = GetSystemMetrics(SM_CXSCREEN);
+        int screenHeight = GetSystemMetrics(SM_CYSCREEN);
+
+        int panelWidth = 600;
+        int startX = (screenWidth - panelWidth) / 2;
+        int yPos = screenHeight / 4;
+
+        for(HWND chk : g_checkboxes){
+            DestroyWindow(chk);
+        }
+        g_checkboxes.clear();
+        
+        g_correctFiles = GetRandomCorrectFiles(g_recentFiles, 3);
+        g_challengeFiles = GenerateChallengeFiles(g_correctFiles);
+
+        static HFONT hLabelFont = NULL;
+
+        hLabelFont = CreateFont(18, 0, 0, 0, FW_BOLD, FALSE, FALSE, FALSE,
+            DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
+            DEFAULT_QUALITY, DEFAULT_PITCH | FF_DONTCARE, "Segoe UI");
+
+        DestroyWindow(g_labelWindow);
+
+        g_labelWindow = CreateWindowExA(0, "STATIC", "Select the 3 files you worked on recently:",
+            WS_CHILD | WS_VISIBLE | SS_LEFT,
+            startX, yPos, panelWidth - 100, 30,
+            g_hMainWindow, NULL, GetModuleHandle(NULL), NULL);
+            SendMessage(g_labelWindow, WM_SETFONT, (WPARAM)hLabelFont, TRUE);
+
+        yPos += 50;
+
+        for (const auto &file : g_challengeFiles)
+        {
+            HWND checkbox = CreateWindowExA(0, "BUTTON", file.c_str(),
+                                            WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX | WS_TABSTOP,
+                                            startX, yPos, panelWidth - 100, 30,
+                                            g_hMainWindow,NULL, GetModuleHandle(NULL), NULL);
+            SendMessage(checkbox, WM_SETFONT, (WPARAM)hFont, TRUE);
+            g_checkboxes.push_back(checkbox);
+            yPos += 35; 
+        }
+
+        SetFocus(g_checkboxes[0]);
+        
+        ShowWindow(g_hMainWindow, SW_MAXIMIZE);
+        UpdateWindow(g_hMainWindow);
         return false;
     }
 
@@ -838,7 +865,8 @@ bool VerifySelection()
     {
         MessageBoxA(g_hMainWindow, "Incorrect challenge response.\nPlease try again.",
                     "Access Denied", MB_OK | MB_ICONWARNING | MB_TOPMOST);
-        
+
+
         // Re-enable hooks
         if (savedKeyboardHook != NULL)
         {
@@ -850,6 +878,59 @@ bool VerifySelection()
             g_hMouseHook = SetWindowsHookEx(WH_MOUSE_LL, MouseHookProc,
                                            GetModuleHandle(NULL), 0);
         }
+
+        HFONT hFont = CreateFont(16, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE,
+            DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
+            DEFAULT_QUALITY, DEFAULT_PITCH | FF_DONTCARE, "Segoe UI");
+
+        int screenWidth = GetSystemMetrics(SM_CXSCREEN);
+        int screenHeight = GetSystemMetrics(SM_CYSCREEN);
+
+        int panelWidth = 600;
+        int startX = (screenWidth - panelWidth) / 2;
+        int yPos = screenHeight / 4;
+
+        for(HWND chk : g_checkboxes){
+            DestroyWindow(chk);
+        }
+        g_checkboxes.clear();
+        
+
+        g_correctFiles = GetRandomCorrectFiles(g_recentFiles, 3);
+        g_challengeFiles = GenerateChallengeFiles(g_correctFiles);
+
+        static HFONT hLabelFont = NULL;
+
+        hLabelFont = CreateFont(18, 0, 0, 0, FW_BOLD, FALSE, FALSE, FALSE,
+            DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
+            DEFAULT_QUALITY, DEFAULT_PITCH | FF_DONTCARE, "Segoe UI");
+
+        DestroyWindow(g_labelWindow);
+
+        g_labelWindow = CreateWindowExA(0, "STATIC", "Select the 3 files you worked on recently:",
+            WS_CHILD | WS_VISIBLE | SS_LEFT,
+            startX, yPos, panelWidth - 100, 30,
+            g_hMainWindow, NULL, GetModuleHandle(NULL), NULL);
+            SendMessage(g_labelWindow, WM_SETFONT, (WPARAM)hLabelFont, TRUE);
+
+        yPos += 50;
+
+        for (const auto &file : g_challengeFiles)
+        {
+            HWND checkbox = CreateWindowExA(0, "BUTTON", file.c_str(),
+                                            WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX | WS_TABSTOP,
+                                            startX, yPos, panelWidth - 100, 30,
+                                            g_hMainWindow,NULL, GetModuleHandle(NULL), NULL);
+            SendMessage(checkbox, WM_SETFONT, (WPARAM)hFont, TRUE);
+            g_checkboxes.push_back(checkbox);
+            yPos += 35; 
+        }
+
+        SetFocus(g_checkboxes[0]);
+        
+        ShowWindow(g_hMainWindow, SW_MAXIMIZE);
+        UpdateWindow(g_hMainWindow);
+
         return false;
     }
 }
@@ -1234,7 +1315,6 @@ bool ShowFirstTimeSetupDialog()
                    "Keys Copied to Clipboard", MB_OK | MB_ICONINFORMATION | MB_TOPMOST);
     }
     
-    // Show confirmation dialog
     std::stringstream confirmMsg;
     confirmMsg << "FINAL CONFIRMATION\n";
     confirmMsg << "==================\n\n";
@@ -1262,7 +1342,6 @@ bool ShowFirstTimeSetupDialog()
     // Save keys to file
     if (SaveAllBackupKeys(keysToSave))
     {
-        // Load keys into memory
         LoadAllBackupKeys();
         return true;
     }
@@ -1275,29 +1354,7 @@ bool ShowFirstTimeSetupDialog()
     }
 }
 
-void ShowUpdateBackupKeyDialog()
-{
-    // Jika sudah ada backup keys, tampilkan peringatan
-    if (BackupKeyExists())
-    {
-        int availableKeys = GetAvailableKeyCount();
-        std::stringstream msg;
-        msg << "You already have backup keys set up.\n\n";
-        msg << "Available keys remaining: " << availableKeys << " of " << TOTAL_BACKUP_KEYS << "\n\n";
-        msg << "Generating new keys will REPLACE all existing keys!\n";
-        msg << "Are you sure you want to continue?";
-        
-        int result = MessageBoxA(NULL, msg.str().c_str(),
-                                "Warning - Replace Keys?", MB_YESNO | MB_ICONWARNING | MB_TOPMOST);
-        if (result != IDYES)
-        {
-            return;
-        }
-    }
-    
-    // Generate new keys using first time setup
-    ShowFirstTimeSetupDialog();
-}
+
 
 void Cleanup()
 {
@@ -1327,6 +1384,8 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     static HFONT hFont = NULL;
     static HFONT hLabelFont = NULL;
     static HBRUSH hBackBrush = NULL;
+    g_hwnd = hwnd;
+
 
     switch (uMsg)
     {

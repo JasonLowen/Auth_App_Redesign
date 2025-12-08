@@ -8,9 +8,14 @@
         "README.md": "2025-12-05T02:11:46",
         "auth_app.cpp": "2025-12-06T00:27:20",
         "requirements.txt": "2025-12-06T00:27:27",
-        "cleaning.ipynb": "2025-12-06T00:28:14",
-        "cleaned_data_pinjaman_koleksi_buku.xlsx": "2025-12-06T00:28:17",
-        "testing_cleaning.xlsx": "2025-12-06T00:28:23"
+        "cleaning.ipynb": "2025-12-08T16:17:37",
+        "cleaned_data_pinjaman_koleksi_buku.xlsx": "2025-12-08T16:56:33",
+        "testing_cleaning.xlsx": "2025-12-06T00:28:23",
+        "Kata_Pengantar.pdf": "2025-12-08T16:00:33",
+        "testcase.txt": "2025-12-08T16:17:18",
+        "data pinjaman koleksi buku.xlsx": "2025-12-08T16:26:19"
     },
-    "current_session": {}
+    "current_session": {
+        "cleaned_data_pinjaman_koleksi_buku.xlsx": "2025-12-08T16:57:40"
+    }
 }

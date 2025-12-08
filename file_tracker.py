@@ -24,43 +24,23 @@ from typing import Dict, Optional
 # ============================================================================
 
 class FileTracker:
-    """
-    Melacak file yang dibuka oleh user melalui double click.
-    Menggunakan folder Recent Windows untuk deteksi.
-    
-    Format output JSON:
-    {
-        "previous_session": { "filename": "timestamp", ... },
-        "current_session": { "filename": "timestamp", ... }
-    }
-    """
-    
     def __init__(self, activity_file: str = "file_activity.json"):
         self.activity_file = activity_file
         
-        # Data struktur sesuai format yang diminta
         self.data: Dict = {
             "previous_session": {},
             "current_session": {}
         }
         
-        # Path ke folder Recent Windows
         self.recent_folder = Path(os.environ['APPDATA']) / 'Microsoft' / 'Windows' / 'Recent'
         
-        # Set untuk tracking file yang sudah dideteksi
-        self.known_shortcuts: Dict[str, float] = {}  # path -> modification time
+        self.known_shortcuts: Dict[str, float] = {}  
         
-        # Load existing data dan setup session
         self._load_and_rotate_session()
         
-        # Initial scan untuk mendapatkan baseline
         self._initial_scan()
     
     def _is_valid_file(self, target_path: str) -> bool:
-        """
-        Cek apakah path adalah FILE (bukan folder).
-        Ini lebih akurat daripada cek ekstensi karena folder juga bisa punya titik di namanya.
-        """
         return os.path.isfile(target_path)
     
     def _load_and_rotate_session(self):
@@ -128,6 +108,7 @@ class FileTracker:
             )
             
             target_path = result.stdout.strip()
+            print(result.stdout)
             return target_path if target_path else None
             
         except Exception:
