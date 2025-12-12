@@ -490,7 +490,9 @@ std::vector<std::string> GetIncorrectFiles()
 
     static std::vector<std::string> extensions = {
         ".pdf", ".docx", ".xlsx", ".pptx", ".txt",
-        ".csv", ".json", ".xml", ".js", ".py"
+        ".csv", ".json", ".xml", ".js", ".py" ,".php", 
+        ".css", ".exe",".png",".jpeg",".jpg",".mp4",
+        ".mp3", ".zip", ".html", ".tsx",".jsx",".ts"
     };
 
     static std::mt19937 gen(std::random_device{}());
