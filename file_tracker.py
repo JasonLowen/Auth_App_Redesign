@@ -7,6 +7,7 @@ Fitur:
 - Melacak file yang dibuka user melalui double click
 - Memonitor folder Recent Windows
 - Format JSON dengan previous_session dan current_session
+- File rotation: previous session cleared when current session hits 3+ files
 """
 
 # ============================================================================
@@ -28,9 +29,12 @@ from typing import Dict, Optional  # For making code clearer (just labels)
 # ============================================================================
 
 class FileTracker:
-    def __init__(self, activity_file: str = "file_activity.json"):
+    def __init__(self, activity_file: str = "file_activity.json", rotation_threshold: int = 3):
         # Where we save our tracking data (like a diary)
         self.activity_file = activity_file
+        
+        # Rotation threshold: when current_session reaches this many files, rotate
+        self.rotation_threshold = rotation_threshold
         
         # Our data storage: two buckets for tracking files
         # Think of it like: "files opened today" vs "files opened yesterday"
@@ -97,6 +101,26 @@ class FileTracker:
                 json.dump(self.data, f, ensure_ascii=False, indent=4)
         except IOError as e:
             print(f"❌ Gagal menyimpan: {e}")
+    
+    def _check_and_rotate(self):
+        """
+        Check if current_session has reached threshold, and rotate if needed
+        When current_session has 3+ files, replace previous_session and clear current
+        """
+        current_count = len(self.data["current_session"])
+        
+        if current_count >= self.rotation_threshold:
+            print(f"🔄 Rotation triggered! Current session: {current_count} files")
+            
+            # Replace previous_session with current_session
+            self.data["previous_session"] = self.data["current_session"].copy()
+            
+            # Clear current_session
+            self.data["current_session"] = {}
+            
+            # Save the rotation
+            self._save_data()
+            print(f"✅ Previous session replaced, current session cleared")
     
     def _initial_scan(self):
         """
@@ -198,6 +222,9 @@ class FileTracker:
         
         # Show notification
         print(f"  📄 {file_name}")
+        
+        # Check if we need to rotate after adding this file
+        self._check_and_rotate()
     
     def start_tracking(self, interval: int = 2):
         """
@@ -205,10 +232,11 @@ class FileTracker:
         Checks every 2 seconds (like looking out the window every 2 seconds)
         """
         print("\n" + "="*60)
-        print("🔄 FILE TRACKER AKTIF")
+        print("📄 FILE TRACKER AKTIF")
         print("="*60)
         print(f"📌 Memonitor: {self.recent_folder}")
         print(f"📌 Interval: setiap {interval} detik")
+        print(f"📌 Rotation threshold: {self.rotation_threshold} files")
         print(f"📌 Output: {self.activity_file}")
         print("📌 Tekan Ctrl+C untuk berhenti")
         print("="*60)
@@ -321,6 +349,8 @@ def main():
                         help='Jumlah file untuk ditampilkan (untuk history)')
     parser.add_argument('-i', '--interval', type=int, default=2,
                         help='Interval scan dalam detik (default: 2)')
+    parser.add_argument('-t', '--threshold', type=int, default=3,
+                        help='Rotation threshold: berapa file di current sebelum rotate (default: 3)')
     
     args = parser.parse_args()
     
@@ -333,7 +363,7 @@ def main():
     """)
     
     # Create the tracker
-    tracker = FileTracker()
+    tracker = FileTracker(rotation_threshold=args.threshold)
     
     # Do what the user asked for
     if args.command == 'track':

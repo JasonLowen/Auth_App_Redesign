@@ -1,24 +1,8 @@
 {
     "previous_session": {
-        "AoL_DB.docx": "2025-12-05T01:58:21",
-        "Artikel_Entre.docx": "2025-12-05T01:58:28",
-        "Comphys.csv": "2025-12-05T01:58:30",
-        "file_activity.json": "2025-12-05T02:04:21",
-        "backup_key.dat": "2025-12-05T02:11:38",
-        "README.md": "2025-12-05T02:11:46",
-        "auth_app.cpp": "2025-12-06T00:27:20",
-        "requirements.txt": "2025-12-06T00:27:27",
-        "cleaning.ipynb": "2025-12-08T16:17:37",
-        "cleaned_data_pinjaman_koleksi_buku.xlsx": "2025-12-08T16:57:40",
-        "testing_cleaning.xlsx": "2025-12-06T00:28:23",
-        "Kata_Pengantar.pdf": "2025-12-08T16:00:33",
-        "testcase.txt": "2025-12-08T16:17:18",
-        "data pinjaman koleksi buku.xlsx": "2025-12-08T16:26:19"
+        "correctfile1.txt": "2025-12-12T15:18:47",
+        "correctfile2.txt": "2025-12-12T15:19:12",
+        "correctfile3.txt": "2025-12-12T15:19:19"
     },
-    "current_session": {
-        "alsotestfile.html": "2025-12-09T12:08:39",
-        "anothertestingfile.py": "2025-12-09T12:08:44",
-        "CorrectYes.txt": "2025-12-09T12:08:49",
-        "VWUSERLIST_2025111_131726.csv": "2025-12-09T12:08:55"
-    }
+    "current_session": {}
 }
