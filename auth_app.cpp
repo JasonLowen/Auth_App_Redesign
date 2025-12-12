@@ -479,13 +479,24 @@ std::vector<std::string> LoadFilesFromJson()
 std::vector<std::string> GetIncorrectFiles()
 {
     static std::vector<std::string> first = {
-        "Report", "Proposal", "Invoice", "Summary", "Presentation",
-        "Contract", "Documentation", "Specification", "Analysis", "Plan"
+    "Report","report", "Proposal","proposal", "Invoice","invoice", 
+    "Summary","summary", "Presentation","presentation",
+    "Contract", "Documentation", "specification", "Analysis", "Plan",
+    "Overview", "Brief", "statement", "Record", "Outline",
+    "Blueprint", "Assessment", "evaluation","Evaluation", "Guide", "Checklist",
+    "Portfolio", "Workflow", "Timeline", "Roadmap", "Memo",
+    "Schedule", "Profile", "Dataset", "Notes","notes", "requirements","Requirements"
     };
-
-    static std::vector<std::string> second = {
-        "Meeting", "Monthly", "Annual", "Final", "Draft", "Revision",
-        "Backup", "Internal", "Client", "Testing", "Production", "Development"
+   static std::vector<std::string> second = {
+    "Meeting","meeting", "Monthly","monthly", "Annual", 
+    "Final","final", "Draft","draft", "Revision","revision",
+    "Backup", "backup", "Internal","internal", "Client",
+    "Testing", "Production","client","production"
+    "Development", "Preliminary", "Updated", "Official", "Version1",
+    "Version2", "Prototype", "Temporary", "archive", "General",
+    "confidential", "External", "Pending","pending", "Submitted", "Approved",
+    "inProgress","InProgress", "FollowUp", "Review", "Validation", "Research".
+    "research","development"
     };
 
     static std::vector<std::string> extensions = {
