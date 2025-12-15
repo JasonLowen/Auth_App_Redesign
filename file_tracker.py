@@ -29,7 +29,7 @@ from typing import Dict, Optional  # For making code clearer (just labels)
 # ============================================================================
 
 class FileTracker:
-    def __init__(self, activity_file: str = "file_activity.json", rotation_threshold: int = 3):
+    def __init__(self, activity_file: str = "file_activity.json", rotation_threshold: int = 15):
         # Where we save our tracking data (like a diary)
         self.activity_file = activity_file
         
@@ -348,8 +348,8 @@ def main():
                         help='Jumlah file untuk ditampilkan (untuk history)')
     parser.add_argument('-i', '--interval', type=int, default=2,
                         help='Interval scan dalam detik (default: 2)')
-    parser.add_argument('-t', '--threshold', type=int, default=3,
-                        help='Rotation threshold: berapa file di current sebelum rotate (default: 3)')
+    parser.add_argument('-t', '--threshold', type=int, default=15,
+                        help='Rotation threshold: berapa file di current sebelum rotate (default: 15)')
     
     args = parser.parse_args()
     

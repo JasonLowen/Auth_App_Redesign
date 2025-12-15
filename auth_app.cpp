@@ -495,7 +495,7 @@ std::vector<std::string> GetIncorrectFiles()
     "Development", "Preliminary", "Updated", "Official", "Version1",
     "Version2", "Prototype", "Temporary", "archive", "General",
     "confidential", "External", "Pending","pending", "Submitted", "Approved",
-    "inProgress","InProgress", "FollowUp", "Review", "Validation", "Research".
+    "inProgress","InProgress", "FollowUp", "Review", "Validation", "Research",
     "research","development"
     };
 
@@ -522,7 +522,7 @@ std::vector<std::string> GetIncorrectFiles()
     {
         files.push_back(
             first[d1(gen)] + "_" +
-            second[d2(gen)] + '.' +
+            second[d2(gen)] +
             extensions[d3(gen)]
         );
     }
