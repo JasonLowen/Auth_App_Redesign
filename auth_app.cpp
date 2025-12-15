@@ -503,7 +503,8 @@ std::vector<std::string> GetIncorrectFiles()
         ".pdf", ".docx", ".xlsx", ".pptx", ".txt",
         ".csv", ".json", ".xml", ".js", ".py" ,".php", 
         ".css", ".exe",".png",".jpeg",".jpg",".mp4",
-        ".mp3", ".zip", ".html", ".tsx",".jsx",".ts"
+        ".mp3", ".zip", ".html", ".tsx",".jsx",".ts",
+        ".sql"
     };
 
     static std::mt19937 gen(std::random_device{}());

@@ -1,0 +1,5 @@
+Ini adalah file uji.
+Digunakan hanya untuk pengujian proses baca file.
+Tidak mengandung informasi penting.
+1234567890
+abcdefg

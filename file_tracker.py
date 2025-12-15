@@ -284,8 +284,7 @@ class FileTracker:
             print("\n📋 File dibuka session ini:")
             items = list(self.data["current_session"].items())[-5:]
             for file_name, timestamp in items:
-                time_part = timestamp.split('T')[1] if 'T' in timestamp else timestamp
-                print(f"   [{time_part}] {file_name}")
+                print(f"  {file_name}")
         
         print("\n✅ Selesai!")
     
