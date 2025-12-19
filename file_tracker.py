@@ -1,7 +1,5 @@
 """
 File Tracker - Melacak file yang dibuka oleh user (double click)
-Author: AI Agent
-Version: 2.1.1
 
 Fitur:
 - Melacak file yang dibuka user melalui double click
