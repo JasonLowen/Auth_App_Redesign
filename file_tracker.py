@@ -1,13 +1,13 @@
 """
 File Tracker - Melacak file yang dibuka oleh user (double click)
 Author: AI Agent
-Version: 2.1.0
+Version: 2.1.1
 
 Fitur:
 - Melacak file yang dibuka user melalui double click
 - Memonitor folder Recent Windows
 - Format JSON dengan previous_session dan current_session
-- File rotation: previous session cleared when current session hits 3+ files
+- File rotation: hanya saat stop (Ctrl+C), dengan threshold logic
 """
 
 # ============================================================================
@@ -33,7 +33,7 @@ class FileTracker:
         # Where we save our tracking data (like a diary)
         self.activity_file = activity_file
         
-        # Rotation threshold: when current_session reaches this many files, rotate
+        # Rotation threshold: when current_session reaches this many files, rotate ON STOP
         self.rotation_threshold = rotation_threshold
         
         # Our data storage: two buckets for tracking files
@@ -51,8 +51,8 @@ class FileTracker:
         # Stores: shortcut name → when it was last changed
         self.known_shortcuts: Dict[str, float] = {}  
         
-        # Move old data to "previous" and start fresh
-        self._load_and_rotate_session()
+        # Load existing data WITHOUT rotating (just load as-is)
+        self._load_data()
         
         # Look at what shortcuts are already there (so we know what's new later)
         self._initial_scan()
@@ -61,32 +61,24 @@ class FileTracker:
         """Check: Is this an actual file? (not a folder)"""
         return os.path.isfile(target_path)
     
-    def _load_and_rotate_session(self):
+    def _load_data(self):
         """
-        Load old data and move it to "previous session"
-        Like: moving yesterday's to-do list to the "completed" pile
+        Load existing data as-is (no rotation on startup)
         """
-        # If we have data from before...
         if os.path.exists(self.activity_file):
             try:
-                # Read our old notebook
                 with open(self.activity_file, 'r', encoding='utf-8') as f:
-                    existing_data = json.load(f)
+                    self.data = json.load(f)
                 
-                # Get what was "previous" and "current" before
-                old_previous = existing_data.get("previous_session", {})
-                old_current = existing_data.get("current_session", {})
+                # Ensure both keys exist
+                if "previous_session" not in self.data:
+                    self.data["previous_session"] = {}
+                if "current_session" not in self.data:
+                    self.data["current_session"] = {}
                 
-                # Combine them: everything becomes "previous" now
-                # Like putting both yesterday's and today's notes into "archive"
-                self.data["previous_session"] = {**old_previous, **old_current}
-                self.data["current_session"] = {}  # Start fresh!
-                
-                total_previous = len(self.data["previous_session"])
-                print(f"📂 Loaded {total_previous} file dari session sebelumnya")
-                
-                # Save this rotation
-                self._save_data()
+                prev_count = len(self.data["previous_session"])
+                curr_count = len(self.data["current_session"])
+                print(f"📂 Loaded: {curr_count} current, {prev_count} previous")
                 
             except (json.JSONDecodeError, TypeError) as e:
                 print(f"⚠️ Gagal load data: {e}")
@@ -102,25 +94,32 @@ class FileTracker:
         except IOError as e:
             print(f"❌ Gagal menyimpan: {e}")
     
-    def _check_and_rotate(self):
+    def _transfer_session_data(self):
         """
-        Check if current_session has reached threshold, and rotate if needed
-        When current_session has 3+ files, replace previous_session and clear current
+        Transfer session data on stop (same logic as original version)
+        If current_session >= threshold: REPLACE previous_session
+        If current_session < threshold: MERGE into previous_session
         """
-        current_count = len(self.data["current_session"])
+        current_session_files = self.data["current_session"]
+        current_count = len(current_session_files)
         
         if current_count >= self.rotation_threshold:
-            print(f"🔄 Rotation triggered! Current session: {current_count} files")
-            
-            # Replace previous_session with current_session
-            self.data["previous_session"] = self.data["current_session"].copy()
-            
-            # Clear current_session
-            self.data["current_session"] = {}
-            
-            # Save the rotation
-            self._save_data()
-            print(f"✅ Previous session replaced, current session cleared")
+            # REPLACE: Previous session completely overwritten
+            print(f"🔄 Rotation: {current_count} files ≥ threshold ({self.rotation_threshold})")
+            print("   → Replacing previous session with current session")
+            self.data["previous_session"] = current_session_files.copy()
+        else:
+            # MERGE: Add current files to previous session
+            print(f"🔄 Merge: {current_count} files < threshold ({self.rotation_threshold})")
+            print("   → Merging current into previous session")
+            self.data["previous_session"].update(current_session_files)
+        
+        # Clear current session
+        self.data["current_session"] = {}
+        
+        # Save the rotation
+        self._save_data()
+        print("✅ Session data transferred")
     
     def _initial_scan(self):
         """
@@ -148,7 +147,6 @@ class FileTracker:
         """
         try:
             # PowerShell command to read where the shortcut points
-            # Think of it as asking Windows to "open the envelope and tell me the address"
             ps_command = f'''
             $shell = New-Object -ComObject WScript.Shell
             $shortcut = $shell.CreateShortcut("{shortcut_path}")
@@ -165,7 +163,6 @@ class FileTracker:
             
             # Get the answer: the real file path
             target_path = result.stdout.strip()
-            print(result.stdout)
             return target_path if target_path else None
             
         except Exception:
@@ -216,15 +213,13 @@ class FileTracker:
         """
         Write down that a file was opened (add to current session)
         Like writing an entry in today's diary
+        NO ROTATION HERE - only save
         """
         self.data["current_session"][file_name] = timestamp
         self._save_data()  # Save to file immediately
         
         # Show notification
         print(f"  📄 {file_name}")
-        
-        # Check if we need to rotate after adding this file
-        self._check_and_rotate()
     
     def start_tracking(self, interval: int = 2):
         """
@@ -232,11 +227,11 @@ class FileTracker:
         Checks every 2 seconds (like looking out the window every 2 seconds)
         """
         print("\n" + "="*60)
-        print("📄 FILE TRACKER AKTIF")
+        print("📁 FILE TRACKER AKTIF")
         print("="*60)
         print(f"📌 Memonitor: {self.recent_folder}")
         print(f"📌 Interval: setiap {interval} detik")
-        print(f"📌 Rotation threshold: {self.rotation_threshold} files")
+        print(f"📌 Rotation threshold: {self.rotation_threshold} files (on stop)")
         print(f"📌 Output: {self.activity_file}")
         print("📌 Tekan Ctrl+C untuk berhenti")
         print("="*60)
@@ -267,7 +262,7 @@ class FileTracker:
             self._on_stop()
     
     def _on_stop(self):
-        """Show summary when tracking stops"""
+        """Show summary when tracking stops + perform rotation"""
         print("\n\n" + "="*60)
         print("🛑 TRACKING DIHENTIKAN")
         print("="*60)
@@ -277,7 +272,6 @@ class FileTracker:
         
         print(f"📊 File session ini: {current_count}")
         print(f"📊 File session sebelumnya: {previous_count}")
-        print(f"💾 Disimpan ke: {self.activity_file}")
         
         # Show last 5 files from current session
         if self.data["current_session"]:
@@ -286,6 +280,12 @@ class FileTracker:
             for file_name, timestamp in items:
                 print(f"  {file_name}")
         
+        print()
+        
+        # Perform rotation using threshold logic
+        self._transfer_session_data()
+        
+        print(f"💾 Disimpan ke: {self.activity_file}")
         print("\n✅ Selesai!")
     
     def print_history(self, limit: int = 20):
@@ -356,7 +356,7 @@ def main():
     # Show welcome message
     print("""
 ╔═══════════════════════════════════════════════════════════════╗
-║                    FILE TRACKER v2.1                          ║
+║                    FILE TRACKER v2.1.1                        ║
 ║         Melacak File yang Dibuka oleh User                    ║
 ╚═══════════════════════════════════════════════════════════════╝
     """)
