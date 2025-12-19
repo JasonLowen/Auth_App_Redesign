@@ -348,7 +348,7 @@ def main():
                         help='Jumlah file untuk ditampilkan (untuk history)')
     parser.add_argument('-i', '--interval', type=int, default=2,
                         help='Interval scan dalam detik (default: 2)')
-    parser.add_argument('-t', '--threshold', type=int, default=15,
+    parser.add_argument('-t', '--threshold', type=int, default=3,
                         help='Rotation threshold: berapa file di current sebelum rotate (default: 15)')
     
     args = parser.parse_args()

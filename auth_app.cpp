@@ -449,6 +449,8 @@ bool ElevateProcess()
 std::vector<std::string> LoadFilesFromJson()
 {
     std::vector<std::string> files;
+    std::vector<std::string> fileDefault;
+    fileDefault = {"document1.txt", "document2.txt", "document3.txt"};
     try
     {
         std::ifstream file("file_activity.json");
@@ -467,9 +469,12 @@ std::vector<std::string> LoadFilesFromJson()
         std::cout << "Error loading files from JSON\n";
     }
 
-    if (files.empty())
+    if (files.size() < 3)
     {
-        files = {"document1.txt", "document2.txt", "document3.txt"};
+        for (int i = files.size(); i < 3; i++)
+        {
+            files.push_back(fileDefault[i]);
+        }
     }
 
     return files;
